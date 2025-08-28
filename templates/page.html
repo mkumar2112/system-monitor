@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Monitoring</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .child-process {
+      margin-left: 20px; 
+      display: none; /* hidden by default */
+    }
+    .toggle-btn {
+      cursor: pointer;
+      color: blue;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body class="p-4">
+
+  <h1 class="mb-4">System Monitoring</h1>
+  <div id="computerList" class="mb-4"></div>
+  <div id="detailsContainer"></div>
+
+  <script>
+    const API_URL = "http://127.0.0.1:8000/api/computers/";
+
+    // Fetch data from API
+    async function loadComputers() {
+      try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error("API error: " + res.status);
+        const data = await res.json();
+        renderComputers(data);
+      } catch (err) {
+        document.getElementById("computerList").innerHTML =
+          `<div class="alert alert-danger">Failed to load data: ${err.message}</div>`;
+      }
+    }
+
+    // Render computer buttons
+    function renderComputers(data) {
+      const listDiv = document.getElementById("computerList");
+      listDiv.innerHTML = "<h3>Select a Computer</h3>";
+      data.forEach(comp => {
+        const btn = document.createElement("button");
+        btn.className = "btn btn-primary m-2";
+        btn.textContent = comp.name;
+        btn.onclick = () => showDetails(comp);
+        listDiv.appendChild(btn);
+      });
+    }
+
+    // Show details (tabs)
+    function showDetails(computer) {
+      const container = document.getElementById("detailsContainer");
+      container.innerHTML = `
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="system-tab" data-bs-toggle="tab" data-bs-target="#system" type="button" role="tab">System Details</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="process-tab" data-bs-toggle="tab" data-bs-target="#process" type="button" role="tab">Process Details</button>
+          </li>
+        </ul>
+        <div class="tab-content mt-3">
+          <div class="tab-pane fade show active" id="system" role="tabpanel">
+            ${renderSystemDetails(computer)}
+          </div>
+          <div class="tab-pane fade" id="process" role="tabpanel">
+            ${renderProcesses(computer.processes || [], "root")}
+          </div>
+        </div>
+      `;
+
+      // Attach toggle events
+      document.querySelectorAll(".toggle-btn").forEach(btn => {
+        btn.addEventListener("click", function () {
+          const targetId = this.dataset.target;
+          const section = document.getElementById(targetId);
+          if (section.style.display === "none") {
+            section.style.display = "block";
+            this.textContent = "▼ Hide Subprocesses";
+          } else {
+            section.style.display = "none";
+            this.textContent = "▶ Show Subprocesses";
+          }
+        });
+      });
+    }
+
+    // Render system details
+    function renderSystemDetails(comp) {
+      return `
+        <ul class="list-group">
+          <li class="list-group-item"><strong>Name:</strong> ${comp.name}</li>
+          <li class="list-group-item"><strong>IP:</strong> ${comp.ip_address}</li>
+          <li class="list-group-item"><strong>OS:</strong> ${comp.os_name} ${comp.os_version}</li>
+          <li class="list-group-item"><strong>Processor:</strong> ${comp.processor_name}</li>
+          <li class="list-group-item"><strong>Cores:</strong> Physical ${comp.physical_cores}, Logical ${comp.logical_cores}</li>
+          <li class="list-group-item"><strong>Frequency:</strong> ${comp.max_frequency_mhz} MHz</li>
+          <li class="list-group-item"><strong>RAM:</strong> ${comp.ram_gb} GB</li>
+          <li class="list-group-item"><strong>Storage:</strong> Total ${comp.total_storage_gb} GB, Used ${comp.used_storage_gb} GB, Free ${comp.free_storage_gb} GB</li>
+        </ul>
+      `;
+    }
+
+    // Render processes recursively with collapsible children
+    function renderProcesses(processes, parentId) {
+      let html = "<ul class='list-group'>";
+      processes.forEach((proc, index) => {
+        const procId = parentId + "-proc-" + proc.pid + "-" + index;
+        html += `
+          <li class="list-group-item">
+            <strong>${proc.name || "Unnamed"}</strong> (PID: ${proc.pid}) - ${proc.status}, Memory: ${proc.memory} MB
+            <br><small>User: ${proc.user || "N/A"}</small>
+            ${proc.children && proc.children.length > 0 ? 
+              `<br><span class="toggle-btn" data-target="${procId}">▶ Show Subprocesses</span>
+               <div id="${procId}" class="child-process">
+                 ${renderProcesses(proc.children, procId)}
+               </div>` 
+              : ""}
+          </li>
+        `;
+      });
+      html += "</ul>";
+      return html;
+    }
+
+    // Load from API on page load
+    loadComputers();
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
