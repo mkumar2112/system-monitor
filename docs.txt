@@ -1,0 +1,123 @@
+System Monitoring Application – Architecture Documentation
+
+1. Overview
+    This project is a System Monitoring Application built with Django, Django REST Framework (DRF), SQLite, Bootstrap, and HTML.
+    It collects system data from an external Agent (agent.exe) running on client machines, which sends details about:
+
+    * Hostname and system information
+    * Running processes and their sub-processes
+
+    The backend stores and manages this data, while the frontend provides a dashboard to visualize and monitor it.
+
+2. High-Level Architecture
+
+    a.) Agent (agent.exe)
+        * Installed on client machines.
+        * Collects host and process information.
+        * Sends data to Django REST API.
+
+    b.) Backend (Django + DRF)
+
+        * Exposes REST API endpoints to receive system/process details.
+        * Stores data in SQLite database.
+        * Provides business logic for monitoring.
+
+    c.) Database (SQLite)
+
+    d.) Stores host details, processes, and sub-processes.
+
+    e.) Frontend (HTML + Bootstrap + Django Templates)
+        * Provides a web dashboard.
+        * Displays system data, process details, and monitoring status.
+
+3. Detailed Architecture
+
+#Django Apps
+
+1. agents
+
+   * Models: `Computer`, `Process`, `SubProcess`
+   * APIs: Receive system and process data from `agent.exe`.
+
+2. monitor
+
+   * Views/Templates: Display dashboards, reports, and live monitoring.
+   * Integrations: Fetch stored system data for visualization.
+
+---
+
+#Models (Example)
+
+* Computer
+
+  * `id`, `hostname`, `ip_address`, `os_name`, `os_version`, `processor_name`, `last_updated`
+
+* Process
+
+  * `id`, `computer (FK)`, `process_name`, `cpu_usage`, `memory_usage`, `status`
+
+* SubProcess
+
+  * `id`, `process (FK)`, `subprocess_name`, `cpu_usage`, `memory_usage`
+
+---
+
+#APIs (DRF)
+
+* POST /api/agent/data/ → Receive system + process details from `agent.exe`.
+* GET /api/agents/ → List all registered computers.
+* GET /api/agents/{id}/processes/ → Fetch running processes of a computer.
+* GET /api/processes/{id}/subprocesses/ → Fetch sub-process details.
+
+---
+
+#Frontend (HTML + Bootstrap + Django Templates)
+
+* Dashboard Page
+
+  * List of all connected computers.
+  * System info: hostname, OS, IP.
+* Process Page
+
+  * Running process details (CPU, memory, status).
+* Sub-Process View
+
+  * Drill-down view for subprocesses.
+
+---
+
+4. Data Flow
+
+1. Agent.exe collects host + process info from client machine.
+2. Sends data to Django REST API endpoint (/api/agent/data/).
+3. Django saves the data into SQLite database.
+4. Frontend (Bootstrap + HTML) displays data in monitoring dashboards.
+5. Admin/Users can browse system → processes → subprocess hierarchy.
+
+---
+
+5. Deployment / Environment Setup
+
+* Local – Run using `python manage.py runserver`.
+* Agent.exe – Installed on client systems, configured to POST data to server IP/port.
+* Production – Can be served using Gunicorn/Uvicorn + Nginx.
+* Database – SQLite (can be upgraded to PostgreSQL/MySQL in production).
+
+---
+
+6. Tech Stack
+
+* Language – Python 3.x
+* Frameworks – Django, Django REST Framework
+* Database – SQLite
+* Frontend – HTML, CSS, Bootstrap (Django templates)
+* Agent – Windows executable (agent.exe) that collects system/process data
+* Optional – Can integrate charts.js / d3.js for live monitoring graphs
+
+---
+
+⚡ With this structure, you have a scalable monitoring system where each machine reports to your central Django app, and you can view live system + process data via the web dashboard.
+
+---
+
+👉 Do you want me to also create a diagram (flowchart/architecture diagram) to visually show how `agent.exe → API → Database → Dashboard` works?

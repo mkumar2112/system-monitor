@@ -1,0 +1,13 @@
+1.) Install PyInstaller
+    pip install pyinstaller
+
+2.) Navigate to your project folder
+    cd path\to\your\agent
+
+3.) Run the build command
+    pyinstaller --onefile agent.py
+
+4.) Find your .exe inside the dist/ folder
+    dist/agent.exe
+
+5.) Agent works and send your system data to api and save in db.

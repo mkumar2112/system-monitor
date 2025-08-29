@@ -1,0 +1,15 @@
+1.) Install dependencies
+    pip install -r requirements.txt (if you have requirements.txt)
+
+2.) Navigate to your project directory
+    cd path/to/your/project
+
+3.) Apply database migrations
+    python manage.py makemigrations
+    python manage.py migrate
+
+4.) Run the development server
+    python manage.py runserver
+
+5.) Access the server in your browser
+    Default: http://127.0.0.1:8000/
